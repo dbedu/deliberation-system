@@ -827,6 +827,15 @@ const RemoteLogs = {
     });
     if(error) console.error('log insert failed', error);
   },
+  async list(){
+    const { data, error } = await sbClient().from('dlb_logs').select('*').order('ts',{ascending:false}).limit(2000);
+    if(error) throw error;
+    return data.map(l=>({ ts:l.ts, memberName:l.member_name, agendaId:l.agenda_id, event:l.event, detail:l.detail, hash:l.hash }));
+  },
+  async clear(){
+    const { error } = await sbClient().from('dlb_logs').delete().not('id','is',null);
+    if(error) throw error;
+  },
 };
 /* Supabase에서 안건 목록을 받아와 로컬 캐시(DB.agendas)에 반영.
    아직 모든 화면을 Supabase 직접 호출로 바꾸지 않았기 때문에,
@@ -1028,14 +1037,17 @@ function showApp(){
   document.getElementById('sbRole').textContent=s.dept;
   nav('dash');
 }
-function nav(p){
+async function nav(p){
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('on'));
   document.querySelectorAll('.ni').forEach(el=>el.classList.remove('on'));
   const pg=document.getElementById('pg-'+p);if(pg)pg.classList.add('on');
   const ni=document.querySelector(`.ni[data-p="${p}"]`);if(ni)ni.classList.add('on');
+  if(p==='create'){initForm();return;}
+  if(['dash','list','status','logs'].includes(p)){
+    try{ await refreshAgendasFromSupabase(); }catch(e){ console.error(e); toast('데이터를 불러오지 못했습니다.','err'); }
+  }
   if(p==='dash')renderDash();
   if(p==='list')renderList();
-  if(p==='create')initForm();
   if(p==='status')renderStatus();
   if(p==='logs')renderLogs();
 }
@@ -2127,7 +2139,17 @@ function showDupWarning(name){
 }
 
 /* 접속 로그 렌더링 */
-function renderLogs(){
+let cachedLogs=[];
+async function renderLogs(){
+  const tbody=document.getElementById('logsTbody');
+  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">불러오는 중...</td></tr>';
+  try{
+    cachedLogs=await RemoteLogs.list();
+  }catch(e){
+    console.error(e);
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--err);padding:32px;">로그를 불러오지 못했습니다.</td></tr>';
+    return;
+  }
   const agFilter=document.getElementById('logFilterAg')?.value||'';
   const evFilter=document.getElementById('logFilterEv')?.value||'';
   // 필터 셀렉트에 안건 목록 채우기
@@ -2139,12 +2161,11 @@ function renderLogs(){
       agSel.appendChild(opt);
     });
   }
-  let logs=[...DB.logs].reverse(); // 최신 순
+  let logs=[...cachedLogs]; // 이미 최신순 정렬됨
   if(agFilter) logs=logs.filter(l=>l.agendaId===agFilter);
   if(evFilter) logs=logs.filter(l=>l.event===evFilter);
-  const evLabel={login:'접속',view:'열람',sign:'서명',logout:'퇴장',block:'차단',expire:'만료'};
-  const evCls={login:'log-ev-login',view:'log-ev-view',sign:'log-ev-sign',logout:'log-ev-logout',block:'log-ev-block',expire:'log-ev-logout'};
-  const tbody=document.getElementById('logsTbody');
+  const evLabel={login:'접속',view:'열람',sign:'서명',logout:'퇴장',block:'차단',expire:'만료',reset_pw:'비번재발급'};
+  const evCls={login:'log-ev-login',view:'log-ev-view',sign:'log-ev-sign',logout:'log-ev-logout',block:'log-ev-block',expire:'log-ev-logout',reset_pw:'log-ev-view'};
   if(!logs.length){
     tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">기록된 로그가 없습니다.</td></tr>';
     return;
@@ -2165,13 +2186,20 @@ function renderLogs(){
   }).join('');
 }
 
-function clearLogs(){
+async function clearLogs(){
   if(!confirm('모든 접속 로그를 삭제하시겠습니까?'))return;
-  DB.logs=[];renderLogs();toast('로그가 초기화되었습니다.');
+  try{
+    await RemoteLogs.clear();
+  }catch(e){
+    console.error(e);
+    toast('로그 삭제 중 오류가 발생했습니다: '+(e.message||e),'err');
+    return;
+  }
+  renderLogs();toast('로그가 초기화되었습니다.','ok');
 }
 
 function exportLogs(){
-  const logs=DB.logs;
+  const logs=cachedLogs;
   if(!logs.length){toast('내보낼 로그가 없습니다.','err');return;}
   const header='일시,위원명,안건,이벤트,상세,해시';
   const rows=logs.map(l=>{
