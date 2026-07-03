@@ -800,12 +800,14 @@ const Agendas = {
     return data;
   },
   async updateStatus(id, status){
-    const { error } = await sbClient().from('dlb_agendas').update({status}).eq('id', id);
+    const { data, error } = await sbClient().from('dlb_agendas').update({status}).eq('id', id).select();
     if(error) throw error;
+    if(!data || data.length===0) throw new Error('상태 변경 권한이 없거나 안건을 찾을 수 없습니다.');
   },
   async remove(id){
-    const { error } = await sbClient().from('dlb_agendas').delete().eq('id', id);
+    const { data, error } = await sbClient().from('dlb_agendas').delete().eq('id', id).select();
     if(error) throw error;
+    if(!data || data.length===0) throw new Error('삭제 권한이 없거나 이미 삭제된 안건입니다.');
   },
 };
 const Members = {
@@ -913,38 +915,53 @@ async function mgrLogin(){
     btn.textContent=origTxt; btn.disabled=false;
   }
 }
-function memLogin(){
+async function memLogin(){
   const tok=document.getElementById('li-tok').value.trim();
   const mpw=document.getElementById('li-mpw').value.trim();
   if(!tok){toast('접속 아이디를 입력하세요.','err');return;}
   if(!mpw){toast('비밀번호를 입력하세요.','err');return;}
-  const ags=DB.agendas;
-  let found=null,midx=-1;
-  for(const ag of ags){
-    const i=ag.members.findIndex(m=>m.token===tok);
-    if(i!==-1){found=ag;midx=i;break;}
+  const btn=document.querySelector('#lf-mem button.btn-primary');
+  const orig=btn.textContent; btn.textContent='접속 중...'; btn.disabled=true;
+  try{
+    const res=await fetch(FN_MEMBER_LOGIN_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json', apikey:SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY},
+      body: JSON.stringify({token:tok, password:mpw}),
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||'로그인에 실패했습니다.');
+    setSbToken(data.token); // 위원 전용(본인 서명 건 1개만 접근 가능한) JWT
+
+    const { data: agRow, error: agErr } = await sbClient().from('dlb_agendas').select('*').eq('id', data.agendaId).maybeSingle();
+    if(agErr||!agRow) throw new Error('안건 정보를 불러오지 못했습니다.');
+    const { data: memRow, error: memErr } = await sbClient().from('dlb_members').select('*').eq('id', data.memberId).maybeSingle();
+    if(memErr||!memRow) throw new Error('위원 정보를 불러오지 못했습니다.');
+    if(memRow.signed){ toast('이미 서명이 완료된 접속 아이디입니다.','err'); setSbToken(null); return; }
+
+    const found={
+      id:agRow.id, owner:agRow.owner, committee:agRow.committee, title:agRow.title,
+      datetime:agRow.datetime, place:agRow.place, agenda:agRow.agenda, review:agRow.review,
+      decision:agRow.decision, timelimit:agRow.timelimit, meetingType:agRow.meeting_type,
+      voteScheme:agRow.vote_scheme, status:agRow.status, attachments:agRow.attachments||[],
+      members:[{ id:memRow.id, label:memRow.label, position:memRow.position, name:memRow.name,
+                 token:memRow.token, vote:memRow.vote, signed:memRow.signed, signData:memRow.sign_data, opinion:memRow.opinion||'' }],
+    };
+    const midx=0;
+    const mem=found.members[midx];
+
+    // 중복 접속 감지 (같은 브라우저 내에서만 유효한 방식 — 다른 기기/브라우저 간 감지는 별도 개선 필요)
+    const sessId=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2);
+    const prevSess=localStorage.getItem('sv3_active_'+tok);
+    const isNew=!prevSess;
+    localStorage.setItem('sv3_active_'+tok, sessId);
+    DB.sess={role:'mem',tok,agendaId:found.id,memberIdx:midx,sessId,memberId:mem.id,name:mem.name};
+    RemoteLogs.add({agendaId:found.id, memberName:mem.name, event:'login', detail:isNew?'정상 접속':'⚠ 중복 접속 감지 (이전 세션 대체)'});
+    showMemPage(found,midx,sessId,!isNew);
+  }catch(e){
+    toast(e.message||'로그인에 실패했습니다.','err');
+  }finally{
+    btn.textContent=orig; btn.disabled=false;
   }
-  if(!found){
-    addLog({event:'block',memberName:'(알수없음)',agendaId:'',agendaTitle:'',detail:'잘못된 접속 아이디: '+tok.slice(0,12)+'…',hash:''});
-    toast('유효하지 않은 접속 아이디입니다.','err');return;
-  }
-  const mem=found.members[midx];
-  // 비밀번호 검증
-  if(mem.password && mem.password!==mpw){
-    addLog({event:'block',memberName:mem.name,agendaId:found.id,agendaTitle:found.committee,detail:'비밀번호 오류',hash:''});
-    toast('비밀번호가 올바르지 않습니다.','err');return;
-  }
-  if(mem.signed){
-    toast('이미 서명이 완료된 접속 아이디입니다.','err');return;
-  }
-  // 중복 접속 감지: 같은 토큰으로 이미 활성 세션이 있는지 확인
-  const sessId=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2);
-  const prevSess=localStorage.getItem('sv3_active_'+tok);
-  const isNew=!prevSess;
-  localStorage.setItem('sv3_active_'+tok, sessId);
-  DB.sess={role:'mem',tok,agendaId:found.id,memberIdx:midx,sessId};
-  addLog({event:'login',memberName:mem.name,agendaId:found.id,agendaTitle:found.committee,detail:isNew?'정상 접속':'⚠ 중복 접속 감지 (이전 세션 대체)',hash:''});
-  showMemPage(found,midx,sessId,!isNew);
 }
 function logout(){logoutRemote();DB.sess=null;sc('scLogin');}
 
@@ -989,10 +1006,9 @@ function memLogout(reason=''){
     if(cur===s.sessId) localStorage.removeItem('sv3_active_'+s.tok);
   }
   if(s?.tok&&s?.agendaId){
-    const ag=DB.agendas.find(a=>a.id===s.agendaId);
-    const mem=ag?.members[s.memberIdx];
-    if(mem) addLog({event:reason==='expire'?'expire':'logout',memberName:mem.name,agendaId:s.agendaId,agendaTitle:ag?.committee||'',detail:reason==='expire'?'접속시간 만료':'자진 퇴장',hash:''});
+    RemoteLogs.add({event:reason==='expire'?'expire':'logout',memberName:s.name||'',agendaId:s.agendaId,detail:reason==='expire'?'접속시간 만료':'자진 퇴장'});
   }
+  logoutRemote();
   DB.sess=null;sc('scLogin');
 }
 
@@ -1090,9 +1106,17 @@ function renderList(){
     </tr>`;
   }).join('');
 }
-function delAgenda(id){
+async function delAgenda(id){
   if(!confirm('정말 삭제하시겠습니까?'))return;
-  DB.agendas=DB.agendas.filter(a=>a.id!==id);renderList();toast('삭제되었습니다.');
+  try{
+    await Agendas.remove(id);
+    await refreshAgendasFromSupabase();
+  }catch(e){
+    console.error(e);
+    toast('삭제 중 오류가 발생했습니다: '+(e.message||e),'err');
+    return;
+  }
+  renderList();toast('삭제되었습니다.','ok');
 }
 
 /* ══════════ 파일 업로드 ══════════ */
@@ -1394,9 +1418,16 @@ function openDetail(id){
   document.getElementById('dt-prev').innerHTML=buildDocHTML(ag);
   openMo('moDetail');swTab('dt','info');
 }
-function changeStatus(id,s){
-  const ags=DB.agendas;const ag=ags.find(a=>a.id===id);
-  if(ag){ag.status=s;DB.agendas=ags;}openDetail(id);toast('상태 변경됨.');
+async function changeStatus(id,s){
+  try{
+    await Agendas.updateStatus(id, s);
+    await refreshAgendasFromSupabase();
+  }catch(e){
+    console.error(e);
+    toast('상태 변경 중 오류가 발생했습니다: '+(e.message||e),'err');
+    return;
+  }
+  openDetail(id);toast('상태 변경됨.','ok');
 }
 function bHtml(s){
   const cl={pending:'b-pending',active:'b-active',complete:'b-complete',closed:'b-closed'};
@@ -1508,6 +1539,7 @@ function showMemPage(ag,midx,sessId,wasDup){
   setTimeout(()=>initSigCanvas(),150);
   // 열람 로그
   addLog({event:'view',memberName:mem.name,agendaId:ag.id,agendaTitle:ag.committee,detail:'안건 열람 시작',hash:''});
+  RemoteLogs.add({event:'view',memberName:mem.name,agendaId:ag.id,detail:'안건 열람 시작'});
   // 중복 세션 주기적 감지 (5초마다)
   if(dupCheckInt)clearInterval(dupCheckInt);
   dupCheckInt=setInterval(()=>{
@@ -1516,6 +1548,7 @@ function showMemPage(ag,midx,sessId,wasDup){
     if(cur&&mySessId&&cur!==mySessId){
       clearInterval(dupCheckInt);clearInterval(timerInt);
       addLog({event:'block',memberName:mem.name,agendaId:ag.id,agendaTitle:ag.committee,detail:'다른 기기/탭에서 접속하여 강제 종료',hash:''});
+      RemoteLogs.add({event:'block',memberName:mem.name,agendaId:ag.id,detail:'다른 기기/탭에서 접속하여 강제 종료'});
       DB.sess=null;sc('scLogin');
       alert('⚠ 동일 아이디로 다른 곳에서 접속하여 이 세션이 종료되었습니다.');
     }
@@ -1650,7 +1683,7 @@ function isSigEmpty(canvas){
 }
 
 /* 제출 */
-function submitSign(){
+async function submitSign(){
   if(!curVote){const isQ=isQuadScheme(curAg);toast(isQ?'인용 또는 기각 등을 먼저 선택하세요.':'가결 또는 부결을 먼저 선택하세요.','err');return;}
   const isWritten=(curAg.meetingType==='written');
   if(isWritten){
@@ -1659,36 +1692,45 @@ function submitSign(){
   }
   const canvas=document.getElementById('sigCanvas');
   if(isSigEmpty(canvas)){toast('서명을 먼저 입력해주세요.','err');return;}
-  const ags=DB.agendas;
-  const ag=ags.find(a=>a.id===curAg.id);if(!ag)return;
-  const mem=ag.members[curMidx];
-  mem.vote=curVote;
-  mem.signed=true;
-  mem.signData=canvas.toDataURL();
-  if(isWritten) mem.opinion=document.getElementById('writtenOpinionText').value.trim();
-  // 타임스탬프 + SHA-256 해시 봉인
-  mem.signedAt=new Date().toISOString();
+
+  const mem=curAg.members[curMidx];
+  const vote=curVote;
+  const signData=canvas.toDataURL();
+  const opinion=isWritten?document.getElementById('writtenOpinionText').value.trim():(mem.opinion||'');
+  const signedAt=new Date().toISOString();
   const hashPayload=JSON.stringify({
-    agendaId:ag.id, committee:ag.committee, agenda:ag.agenda,
-    memberName:mem.name, vote:mem.vote, opinion:mem.opinion||'',
-    signedAt:mem.signedAt, signDataLen:mem.signData.length
+    agendaId:curAg.id, committee:curAg.committee, agenda:curAg.agenda,
+    memberName:mem.name, vote, opinion, signedAt, signDataLen:signData.length
   });
-  sha256(hashPayload).then(hash=>{
-    mem.docHash=hash;
-    if(ag.members.every(m=>m.signed))ag.status='complete';
-    DB.agendas=ags;
-    addLog({event:'sign',memberName:mem.name,agendaId:ag.id,agendaTitle:ag.committee,
-      detail:`${voteLabel(mem.vote,ag)} 서명 완료`,hash:hash});
-  });
-  if(ag.members.every(m=>m.signed))ag.status='complete';
-  DB.agendas=ags;
+  const hash=await sha256(hashPayload);
+
+  const btn=document.querySelector('.btn-submit');
+  const origHTML=btn.innerHTML;
+  btn.textContent='제출 중...'; btn.disabled=true;
+  try{
+    const { error } = await sbClient().from('dlb_members')
+      .update({ vote, signed:true, sign_data:signData, opinion })
+      .eq('id', mem.id);
+    if(error) throw error;
+    await RemoteLogs.add({event:'sign', memberName:mem.name, agendaId:curAg.id, detail:`${voteLabel(vote,curAg)} 서명 완료`, hash});
+  }catch(e){
+    console.error(e);
+    toast('서명 제출 중 오류가 발생했습니다: '+(e.message||e),'err');
+    btn.innerHTML=origHTML; btn.disabled=false;
+    return;
+  }
+
+  // 로컬 표시 갱신
+  mem.vote=vote; mem.signed=true; mem.signData=signData; mem.opinion=opinion;
+  mem.signedAt=signedAt; mem.docHash=hash;
+
   if(timerInt)clearInterval(timerInt);
   document.getElementById('mTimer').style.display='none';
   document.getElementById('signPanel').style.display='none';
   document.getElementById('signFooter').style.display='none';
   document.getElementById('donePanel').style.display='block';
   // 완료 패널에 봉인 배지 표시
-  const isQuadFinal=isQuadScheme(ag);
+  const isQuadFinal=isQuadScheme(curAg);
   const doneVoteLabels={approve:isQuadFinal?'인용':'가결',partial:'부분인용',reject:isQuadFinal?'기각':'부결',dismiss:'각하'};
   const doneVoteLabel=doneVoteLabels[curVote]||curVote;
   document.getElementById('doneMsg').textContent=`${mem.name} 위원님의 의결서가 [${doneVoteLabel}]로 제출되었습니다.\n접속을 종료하셔도 됩니다.`;
