@@ -1720,10 +1720,12 @@ async function submitSign(){
   const origHTML=btn.innerHTML;
   btn.textContent='제출 중...'; btn.disabled=true;
   try{
-    const { error } = await sbClient().from('dlb_members')
+    const { data, error } = await sbClient().from('dlb_members')
       .update({ vote, signed:true, sign_data:signData, opinion })
-      .eq('id', mem.id);
+      .eq('id', mem.id)
+      .select();
     if(error) throw error;
+    if(!data || data.length===0) throw new Error('서명 저장 권한이 없거나(로그인 만료 등) 위원 정보를 찾을 수 없습니다.');
     await RemoteLogs.add({event:'sign', memberName:mem.name, agendaId:curAg.id, detail:`${voteLabel(vote,curAg)} 서명 완료`, hash});
   }catch(e){
     console.error(e);
