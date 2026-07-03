@@ -1786,8 +1786,8 @@ function buildMeetingDocHTML(ag){
     const schema=voteSchema(ag);
     const isQuad=schema.length>2;
     const voteFont=isQuad?'11pt':'12pt';
-    const voteColW=isQuad?'54px':'56px';
-    const sigColW=isQuad?'58px':'90px';
+    const voteColW=isQuad?'48px':'52px';
+    const sigColW='80px';
     const infoRows=[['위원회',ag.committee],['일시',ag.datetime],['장소',ag.place||''],['안건',ag.agenda],['심의내용',ag.review||''],['의결주문',ag.decision||'']].map(([lbl,val])=>{
       const oneLine=(lbl==='심의내용'||lbl==='의결주문');
       const valStyle=oneLine
@@ -1815,7 +1815,7 @@ function buildMeetingDocHTML(ag){
         <colgroup><col style="width:64px"><col style="width:122px"><col style="width:80px">${schema.map(()=>`<col style="width:${voteColW}">`).join('')}<col style="width:${sigColW}"></colgroup>
         <thead>
           <tr>
-            <th rowspan="2" style="border:1px solid #333;padding:4px 2px;text-align:center;font-size:13pt;background:#f4f4f4;font-weight:700;font-family:${F};">심사위원</th>
+            <th rowspan="2" style="border:1px solid #333;padding:4px 2px;text-align:center;font-size:13pt;background:#f4f4f4;font-weight:700;font-family:${F};">구분</th>
             <th rowspan="2" style="border:1px solid #333;padding:4px 2px;text-align:center;font-size:13pt;background:#f4f4f4;font-weight:700;font-family:${F};">직위</th>
             <th rowspan="2" style="border:1px solid #333;padding:4px 2px;text-align:center;font-size:13pt;background:#f4f4f4;font-weight:700;font-family:${F};">성명</th>
             <th colspan="${schema.length}" style="border:1px solid #333;padding:4px 2px;text-align:center;font-size:13pt;background:#f4f4f4;font-weight:700;font-family:${F};">의결내용</th>
@@ -1841,15 +1841,15 @@ function buildWrittenDocHTML(ag){
       <div style="text-align:center;font-size:22.5pt;font-weight:700;margin-bottom:14px;letter-spacing:0.05em;font-family:${F};">${ag.title||'심의의결서'}</div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
         <tr>
-          <td style="border:1px solid #333;padding:6px 9px;width:72px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;font-family:${F};">의결일시</td>
+          <td style="border:1px solid #333;padding:6px 9px;width:100px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;font-family:${F};white-space:nowrap;">의결일시</td>
           <td style="border:1px solid #333;padding:6px 10px;font-size:13.5pt;font-family:${F};">${ag.datetime}</td>
         </tr>
         <tr>
-          <td style="border:1px solid #333;padding:6px 9px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;font-family:${F};">의결장소</td>
+          <td style="border:1px solid #333;padding:6px 9px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;font-family:${F};white-space:nowrap;">의결장소</td>
           <td style="border:1px solid #333;padding:6px 10px;font-size:13.5pt;font-family:${F};">${ag.place||'서면심의'}</td>
         </tr>
         <tr>
-          <td style="border:1px solid #333;padding:6px 9px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;vertical-align:middle;font-family:${F};">위 원 명</td>
+          <td style="border:1px solid #333;padding:6px 9px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;vertical-align:middle;font-family:${F};white-space:nowrap;">위 원 명</td>
           <td style="border:1px solid #333;padding:6px 10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;font-size:13.5pt;font-family:${F};">
               <span>${m.label}&nbsp;&nbsp;${m.name}</span>
@@ -1866,11 +1866,11 @@ function buildWrittenDocHTML(ag){
       </table>
       <table style="width:100%;border-collapse:collapse;margin-bottom:0;">
         <tr>
-          <td style="border:1px solid #333;padding:6px 9px;width:72px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;vertical-align:top;font-family:${F};">심의안건</td>
+          <td style="border:1px solid #333;padding:6px 9px;width:100px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;vertical-align:top;font-family:${F};white-space:nowrap;">심의안건</td>
           <td style="border:1px solid #333;padding:7px 10px;font-size:13.5pt;line-height:1.75;font-family:${F};white-space:pre-wrap;">${ag.agenda}</td>
         </tr>
         <tr>
-          <td style="border:1px solid #333;padding:6px 9px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;vertical-align:middle;font-family:${F};">의결사항</td>
+          <td style="border:1px solid #333;padding:6px 9px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;vertical-align:middle;font-family:${F};white-space:nowrap;">의결사항</td>
           <td style="border:1px solid #333;padding:0;">
             <table style="width:100%;border-collapse:collapse;">
               <tr>
@@ -2034,8 +2034,8 @@ function buildMeetingPdfPageBodyHTML(members, pNum, totalPages, ag) {
   const schema=voteSchema(ag);
   const isQuad=schema.length>2;
   const voteFont=isQuad?'10pt':'12pt';
-  const voteColW=isQuad?'46pt':'52pt';
-  const sigColW=isQuad?'48pt':'80pt';
+  const voteColW=isQuad?'41pt':'46pt';
+  const sigColW='66pt';
   const infoRows = [['위원회',ag.committee||''],['일시',ag.datetime||''],['장소',ag.place||''],['안건',ag.agenda||''],['심의내용',ag.review||''],['의결주문',ag.decision||'']].map(([l,v])=>{
     const oneLine=(l==='심의내용'||l==='의결주문');
     const valStyle=oneLine
@@ -2056,7 +2056,7 @@ function buildMeetingPdfPageBodyHTML(members, pNum, totalPages, ag) {
 <table style="table-layout:fixed;width:100%;">
   <colgroup><col style="width:54pt"><col style="width:104pt"><col style="width:66pt">${schema.map(()=>`<col style="width:${voteColW}">`).join('')}<col style="width:${sigColW}"></colgroup>
   <thead><tr>
-    <th style="border:1px solid #222;border-bottom:none;padding:5pt 3pt 0;text-align:center;font-size:12pt;background:#efefef;font-weight:700;vertical-align:bottom;">심사위원</th>
+    <th style="border:1px solid #222;border-bottom:none;padding:5pt 3pt 0;text-align:center;font-size:12pt;background:#efefef;font-weight:700;vertical-align:bottom;">구분</th>
     <th style="border:1px solid #222;border-bottom:none;padding:5pt 3pt 0;text-align:center;font-size:12pt;background:#efefef;font-weight:700;vertical-align:bottom;">직위</th>
     <th style="border:1px solid #222;border-bottom:none;padding:5pt 3pt 0;text-align:center;font-size:12pt;background:#efefef;font-weight:700;vertical-align:bottom;">성명</th>
     <th colspan="${schema.length}" style="border:1px solid #222;padding:3pt;text-align:center;font-size:12pt;background:#efefef;font-weight:700;">의결내용</th>
@@ -2088,9 +2088,9 @@ function buildWrittenPdfPageHTML(m, idx, ag) {
   return `<div style="padding:0 0 0 0;">
 <div style="text-align:center;font-size:22.5pt;font-weight:700;letter-spacing:0.06em;margin-bottom:12pt;">${(ag.title||'심의의결서').replace(/&/g,'&amp;')}</div>
 <table style="margin-bottom:8pt;">
-  <tr><td style="border:1px solid #222;padding:5pt 7pt;width:58pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">의결일시</td><td style="border:1px solid #222;padding:5pt 8pt;font-size:13.5pt;">${ag.datetime}</td></tr>
-  <tr><td style="border:1px solid #222;padding:5pt 7pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">의결장소</td><td style="border:1px solid #222;padding:5pt 8pt;font-size:13.5pt;">${ag.place||'서면심의'}</td></tr>
-  <tr><td style="border:1px solid #222;padding:5pt 7pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">위 원 명</td>
+  <tr><td style="border:1px solid #222;padding:5pt 7pt;width:78pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">의결일시</td><td style="border:1px solid #222;padding:5pt 8pt;font-size:13.5pt;">${ag.datetime}</td></tr>
+  <tr><td style="border:1px solid #222;padding:5pt 7pt;width:78pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">의결장소</td><td style="border:1px solid #222;padding:5pt 8pt;font-size:13.5pt;">${ag.place||'서면심의'}</td></tr>
+  <tr><td style="border:1px solid #222;padding:5pt 7pt;width:78pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">위 원 명</td>
     <td style="border:1px solid #222;padding:5pt 8pt;font-size:13.5pt;">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <span>${m.label}&nbsp;&nbsp;${m.name}</span>
@@ -2100,9 +2100,9 @@ function buildWrittenPdfPageHTML(m, idx, ag) {
   </tr>
 </table>
 <table>
-  <tr><td style="border:1px solid #222;padding:5pt 7pt;width:58pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:top;white-space:nowrap;">심의안건</td>
+  <tr><td style="border:1px solid #222;padding:5pt 7pt;width:78pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:top;white-space:nowrap;">심의안건</td>
       <td style="border:1px solid #222;padding:6pt 8pt;font-size:13.5pt;line-height:1.75;white-space:pre-wrap;">${ag.agenda.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</td></tr>
-  <tr><td style="border:1px solid #222;padding:5pt 7pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">의결사항</td>
+  <tr><td style="border:1px solid #222;padding:5pt 7pt;width:78pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">의결사항</td>
     <td style="border:1px solid #222;padding:0;">
       <table><tr>
         ${voteSchema(ag).map((s,i,arr)=>`<td style="width:${100/arr.length}%;${i<arr.length-1?'border-right:1px solid #222;':''}padding:4pt;text-align:center;font-weight:700;font-size:12pt;background:#fafafa;">${s.label}</td>`).join('')}
