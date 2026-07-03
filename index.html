@@ -1785,16 +1785,16 @@ function buildMeetingDocHTML(ag){
     const sigRowH=Math.max(56,Math.min(110,Math.floor(340/members.length)));
     const schema=voteSchema(ag);
     const isQuad=schema.length>2;
-    const voteFont=isQuad?'10.5pt':'12pt';
-    const voteColW=isQuad?'46px':'50px';
-    const sigColW=isQuad?'82px':'120px';
+    const voteFont=isQuad?'11pt':'12pt';
+    const voteColW=isQuad?'54px':'56px';
+    const sigColW=isQuad?'58px':'90px';
     const infoRows=[['위원회',ag.committee],['일시',ag.datetime],['장소',ag.place||''],['안건',ag.agenda],['심의내용',ag.review||''],['의결주문',ag.decision||'']].map(([lbl,val])=>{
       const oneLine=(lbl==='심의내용'||lbl==='의결주문');
       const valStyle=oneLine
         ?`border:1px solid #333;padding:7px 12px;font-size:13.5pt;line-height:1.7;vertical-align:middle;font-family:${F};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0;`
         :`border:1px solid #333;padding:7px 12px;font-size:13.5pt;line-height:1.7;vertical-align:top;font-family:${F};white-space:pre-wrap;`;
       return `
-      <tr><td style="border:1px solid #333;padding:7px 8px;width:92px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;vertical-align:middle;font-family:${F};white-space:nowrap;">${lbl}</td>
+      <tr><td style="border:1px solid #333;padding:7px 6px;width:130px;background:#f4f4f4;text-align:center;font-size:13.5pt;font-weight:700;vertical-align:middle;font-family:${F};white-space:nowrap;">${lbl}</td>
           <td style="${valStyle}" title="${String(val).replace(/"/g,'&quot;')}">${val}</td></tr>`;
     }).join('');
     const memRows=members.map(m=>{
@@ -1810,9 +1810,9 @@ function buildMeetingDocHTML(ag){
     const pnHtml=totalPages>1?`<div style="text-align:center;margin-top:10px;font-size:12pt;color:#666;font-family:${F};">— ${pNum} —</div>`:'';
     return `<div style="background:#fff;padding:18px 22px;border:1px solid #ddd;">
       <div style="text-align:center;font-size:27pt;font-weight:700;margin-bottom:16px;letter-spacing:0.1em;font-family:${F};">${ag.title||'심의의결서'}</div>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:10px;table-layout:fixed;"><colgroup><col style="width:92px"><col></colgroup>${infoRows}</table>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:10px;table-layout:fixed;"><colgroup><col style="width:130px"><col></colgroup>${infoRows}</table>
       <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-        <colgroup><col style="width:70px"><col style="width:100px"><col style="width:88px">${schema.map(()=>`<col style="width:${voteColW}">`).join('')}<col style="width:${sigColW}"></colgroup>
+        <colgroup><col style="width:64px"><col style="width:122px"><col style="width:80px">${schema.map(()=>`<col style="width:${voteColW}">`).join('')}<col style="width:${sigColW}"></colgroup>
         <thead>
           <tr>
             <th rowspan="2" style="border:1px solid #333;padding:4px 2px;text-align:center;font-size:13pt;background:#f4f4f4;font-weight:700;font-family:${F};">심사위원</th>
@@ -2033,16 +2033,16 @@ function buildMeetingPdfPageBodyHTML(members, pNum, totalPages, ag) {
   const sigRowH = Math.max(57, Math.min(135, Math.floor(390 / members.length)));
   const schema=voteSchema(ag);
   const isQuad=schema.length>2;
-  const voteFont=isQuad?'9.5pt':'12pt';
-  const voteColW=isQuad?'42pt':'50pt';
-  const sigColW=isQuad?'62pt':'100pt';
+  const voteFont=isQuad?'10pt':'12pt';
+  const voteColW=isQuad?'46pt':'52pt';
+  const sigColW=isQuad?'48pt':'80pt';
   const infoRows = [['위원회',ag.committee||''],['일시',ag.datetime||''],['장소',ag.place||''],['안건',ag.agenda||''],['심의내용',ag.review||''],['의결주문',ag.decision||'']].map(([l,v])=>{
     const oneLine=(l==='심의내용'||l==='의결주문');
     const valStyle=oneLine
       ?'padding:6pt 8pt;font-size:13pt;line-height:1.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0;'
       :'padding:6pt 8pt;font-size:13pt;line-height:1.65;white-space:pre-wrap;word-break:keep-all;';
     return `
-    <tr><td style="border:1px solid #222;padding:6pt 4pt;width:88pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">${l}</td>
+    <tr><td style="border:1px solid #222;padding:6pt 4pt;width:110pt;background:#efefef;text-align:center;font-weight:700;font-size:13pt;vertical-align:middle;white-space:nowrap;">${l}</td>
         <td style="border:1px solid #222;${valStyle}" title="${v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}">${v.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</td></tr>`;
   }).join('');
   const memRows = members.map(m=>{
@@ -2052,9 +2052,9 @@ function buildMeetingPdfPageBodyHTML(members, pNum, totalPages, ag) {
   }).join('');
   const pnHtml=totalPages>1?`<div style="text-align:center;margin-top:10pt;font-size:12pt;color:#555;">— ${pNum} —</div>`:'';
   return `<div style="text-align:center;font-size:25.5pt;font-weight:700;letter-spacing:0.12em;margin-bottom:12pt;">${(ag.title||'심의의결서').replace(/&/g,'&amp;')}</div>
-<table style="margin-bottom:8pt;table-layout:fixed;width:100%;"><colgroup><col style="width:88pt"><col></colgroup>${infoRows}</table>
+<table style="margin-bottom:8pt;table-layout:fixed;width:100%;"><colgroup><col style="width:110pt"><col></colgroup>${infoRows}</table>
 <table style="table-layout:fixed;width:100%;">
-  <colgroup><col style="width:62pt"><col style="width:86pt"><col style="width:76pt">${schema.map(()=>`<col style="width:${voteColW}">`).join('')}<col style="width:${sigColW}"></colgroup>
+  <colgroup><col style="width:54pt"><col style="width:104pt"><col style="width:66pt">${schema.map(()=>`<col style="width:${voteColW}">`).join('')}<col style="width:${sigColW}"></colgroup>
   <thead><tr>
     <th style="border:1px solid #222;border-bottom:none;padding:5pt 3pt 0;text-align:center;font-size:12pt;background:#efefef;font-weight:700;vertical-align:bottom;">심사위원</th>
     <th style="border:1px solid #222;border-bottom:none;padding:5pt 3pt 0;text-align:center;font-size:12pt;background:#efefef;font-weight:700;vertical-align:bottom;">직위</th>
