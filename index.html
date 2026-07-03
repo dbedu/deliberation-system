@@ -771,7 +771,10 @@ function setSbToken(t){ if(t) sessionStorage.setItem('sv3_jwt', t); else session
 function sbClient(){
   const token = getSbToken();
   return supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    global: {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      fetch: (url, options={}) => fetch(url, { ...options, cache: 'no-store' }),
+    },
     auth: { persistSession:false, autoRefreshToken:false },
   });
 }
