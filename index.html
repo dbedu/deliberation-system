@@ -438,6 +438,14 @@ tr:hover td{background:#fafaf8;}
             <div class="fg" id="voteSchemeField" style="display:block;">
               <label>의결 방식 *</label>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <label class="type-card" id="schemeCard-binary" onclick="setVoteScheme('binary')" style="cursor:pointer;border:2px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;background:#fff;">
+                  <div style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border-s);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;" id="schemeRadio-binary"></div>
+                  <div>
+                    <div style="font-size:13px;font-weight:700;color:var(--muted);" id="schemeLabel-binary">원안가결/수정가결/부결/보류</div>
+                    <div style="font-size:11px;color:var(--light);margin-top:2px;">4지 선택</div>
+                    <div style="font-size:11px;color:var(--light);margin-top:2px;">일반(정책,인사 등) 심의</div>
+                  </div>
+                </label>
                 <label class="type-card" id="schemeCard-quad" onclick="setVoteScheme('quad')" style="cursor:pointer;border:2px solid var(--primary);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;background:#f0f4ff;">
                   <div style="width:18px;height:18px;border-radius:50%;border:2px solid var(--primary);background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;" id="schemeRadio-quad">
                     <div style="width:7px;height:7px;border-radius:50%;background:#fff;"></div>
@@ -445,13 +453,7 @@ tr:hover td{background:#fafaf8;}
                   <div>
                     <div style="font-size:13px;font-weight:700;color:var(--primary);" id="schemeLabel-quad">인용/부분인용/기각/각하</div>
                     <div style="font-size:11px;color:var(--muted);margin-top:2px;">4지 선택</div>
-                  </div>
-                </label>
-                <label class="type-card" id="schemeCard-binary" onclick="setVoteScheme('binary')" style="cursor:pointer;border:2px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;background:#fff;">
-                  <div style="width:18px;height:18px;border-radius:50%;border:2px solid var(--border-s);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;" id="schemeRadio-binary"></div>
-                  <div>
-                    <div style="font-size:13px;font-weight:700;color:var(--muted);" id="schemeLabel-binary">가결/부결</div>
-                    <div style="font-size:11px;color:var(--light);margin-top:2px;">2지 선택</div>
+                    <div style="font-size:11px;color:var(--muted);margin-top:2px;">(청구,이의신청 심의)</div>
                   </div>
                 </label>
               </div>
@@ -687,13 +689,23 @@ tr:hover td{background:#fafaf8;}
         <!-- 의결 선택 -->
         <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:9px;" id="voteSectionLabel">의결 내용 선택</div>
 
-        <!-- 소집회의: 가결/부결 2버튼 -->
-        <div class="vote-btns" id="voteBtns2">
-          <button class="vote-btn approve-btn" id="btnApprove" onclick="selectVote('approve')">
-            <span class="vico">✓</span><span id="approveLabel">가결</span>
+        <!-- 소집회의: 원안가결/수정가결/부결/보류 4버튼 -->
+        <div id="voteBtns2" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+          <button class="vote-btn approve-btn" onclick="selectVote('approve')" id="btn2Approve"
+            style="font-size:13px;">
+            <span class="vico" style="font-size:20px;">✓</span><span>원안가결</span>
           </button>
-          <button class="vote-btn reject-btn" id="btnReject" onclick="selectVote('reject')">
-            <span class="vico">✗</span><span id="rejectLabel">부결</span>
+          <button class="vote-btn" onclick="selectVote('partial')" id="btn2Partial"
+            style="color:#1565c0;font-size:13px;">
+            <span class="vico" style="font-size:20px;">◑</span><span>수정가결</span>
+          </button>
+          <button class="vote-btn reject-btn" onclick="selectVote('reject')" id="btn2Reject"
+            style="font-size:13px;">
+            <span class="vico" style="font-size:20px;">✗</span><span>부결</span>
+          </button>
+          <button class="vote-btn" onclick="selectVote('dismiss')" id="btn2Dismiss"
+            style="color:#888;font-size:13px;">
+            <span class="vico" style="font-size:20px;">—</span><span>보류</span>
           </button>
         </div>
 
@@ -1235,12 +1247,12 @@ function setMeetingType(type){
   document.getElementById('typeRadio-written').style.borderColor=isWritten?'var(--primary)':'var(--border-s)';
   document.getElementById('typeRadio-written').innerHTML=isWritten?'<div style="width:8px;height:8px;border-radius:50%;background:#fff;"></div>':'';
   document.getElementById('typeLabel-written').style.color=isWritten?'var(--primary)':'var(--muted)';
-  // 서면회의일 때만 의결 방식(가/부 vs 4지) 선택 노출. 소집회의는 항상 가결/부결 고정.
+  // 회의 유형 변경 시 기본 의결 방식을 맞춰줌 (담당자가 이후 자유롭게 다시 바꿀 수 있음)
   document.getElementById('voteSchemeField').style.display='block';
   setVoteScheme(isWritten?'quad':'binary');
 }
 
-/* 의결 방식 선택 (서면회의에서만 사용자가 바꿀 수 있음) */
+/* 의결 방식 선택 (원안가결/수정가결/부결/보류 ↔ 인용/부분인용/기각/각하) */
 function setVoteScheme(scheme){
   document.getElementById('f-vscheme').value=scheme;
   const isQuad=scheme==='quad';
@@ -1678,40 +1690,32 @@ function selectVote(v){
   curVote=v;
   const isQuad=isQuadScheme(curAg);
   const bar=document.getElementById('voteBar');
+  const prefix=isQuad?'btn4':'btn2';
 
-  if(isQuad){
-    // 4버튼: 전체 초기화 후 선택 표시
-    const btnIds=['btn4Approve','btn4Partial','btn4Reject','btn4Dismiss'];
-    btnIds.forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.classList.remove('sel','approve-btn','partial-sel','reject-btn','dismiss-sel');
-    });
-    const selMap={approve:'btn4Approve',partial:'btn4Partial',reject:'btn4Reject',dismiss:'btn4Dismiss'};
-    const btnCls={approve:'approve-btn',partial:'partial-sel',reject:'reject-btn',dismiss:'dismiss-sel'};
-    const selEl=document.getElementById(selMap[v]);
-    if(selEl) selEl.classList.add('sel', btnCls[v]||'');
+  // 전체 초기화 후 선택 표시 (4지선다 공통 로직 — 소집/서면회의 모두 동일)
+  const btnIds=[prefix+'Approve',prefix+'Partial',prefix+'Reject',prefix+'Dismiss'];
+  btnIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.remove('sel','approve-btn','partial-sel','reject-btn','dismiss-sel');
+  });
+  const selMap={approve:prefix+'Approve',partial:prefix+'Partial',reject:prefix+'Reject',dismiss:prefix+'Dismiss'};
+  const btnCls={approve:'approve-btn',partial:'partial-sel',reject:'reject-btn',dismiss:'dismiss-sel'};
+  const selEl=document.getElementById(selMap[v]);
+  if(selEl) selEl.classList.add('sel', btnCls[v]||'');
 
-    const labelMap={approve:'✓ 인용 선택됨',partial:'◑ 부분인용 선택됨',reject:'✗ 기각 선택됨',dismiss:'— 각하 선택됨'};
-    const barCls={approve:'vb-ok',partial:'vb-ok',reject:'vb-err',dismiss:'vb-err'};
-    bar.className='vote-bar '+(barCls[v]||'vb-none');
-    bar.textContent=labelMap[v]||'선택됨';
-  } else {
-    // 2버튼
-    document.getElementById('btnApprove').classList.toggle('sel',v==='approve');
-    document.getElementById('btnReject').classList.toggle('sel',v==='reject');
-    bar.className='vote-bar '+(v==='approve'?'vb-ok':'vb-err');
-    bar.textContent=v==='approve'?'✓ 가결 선택됨':'✗ 부결 선택됨';
-  }
+  const labelMap=isQuad
+    ?{approve:'✓ 인용 선택됨',partial:'◑ 부분인용 선택됨',reject:'✗ 기각 선택됨',dismiss:'— 각하 선택됨'}
+    :{approve:'✓ 원안가결 선택됨',partial:'◑ 수정가결 선택됨',reject:'✗ 부결 선택됨',dismiss:'— 보류 선택됨'};
+  const barCls={approve:'vb-ok',partial:'vb-ok',reject:'vb-err',dismiss:'vb-err'};
+  bar.className='vote-bar '+(barCls[v]||'vb-none');
+  bar.textContent=labelMap[v]||'선택됨';
 }
 function resetVoteUI(){
   curVote=null;
-  // 2버튼 초기화
-  document.getElementById('btnApprove')?.classList.remove('sel');
-  document.getElementById('btnReject')?.classList.remove('sel');
-  // 4버튼 초기화
-  ['btn4Approve','btn4Partial','btn4Reject','btn4Dismiss'].forEach(id=>{
+  // 4버튼 초기화 (소집회의용 btn2*, 서면회의용 btn4* 모두)
+  ['btn2Approve','btn2Partial','btn2Reject','btn2Dismiss','btn4Approve','btn4Partial','btn4Reject','btn4Dismiss'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el){el.classList.remove('sel','approve-btn','reject-btn');el.style.background='';el.style.borderColor='';el.style.color='';}
+    if(el){el.classList.remove('sel','approve-btn','partial-sel','reject-btn','dismiss-sel');el.style.background='';el.style.borderColor='';el.style.color='';}
   });
   const bar=document.getElementById('voteBar');
   bar.className='vote-bar vb-none';bar.textContent='의결 내용을 선택해주세요';
@@ -1757,7 +1761,7 @@ function isSigEmpty(canvas){
 
 /* 제출 */
 async function submitSign(){
-  if(!curVote){const isQ=isQuadScheme(curAg);toast(isQ?'인용 또는 기각 등을 먼저 선택하세요.':'가결 또는 부결을 먼저 선택하세요.','err');return;}
+  if(!curVote){toast('의결 내용을 먼저 선택하세요.','err');return;}
   const isWritten=(curAg.meetingType==='written');
   if(isWritten){
     const opinion=document.getElementById('writtenOpinionText').value.trim();
@@ -1805,9 +1809,7 @@ async function submitSign(){
   document.getElementById('signFooter').style.display='none';
   document.getElementById('donePanel').style.display='block';
   // 완료 패널에 봉인 배지 표시
-  const isQuadFinal=isQuadScheme(curAg);
-  const doneVoteLabels={approve:isQuadFinal?'인용':'가결',partial:'부분인용',reject:isQuadFinal?'기각':'부결',dismiss:'각하'};
-  const doneVoteLabel=doneVoteLabels[curVote]||curVote;
+  const doneVoteLabel=voteLabel(curVote,curAg);
   document.getElementById('doneMsg').textContent=`${mem.name} 위원님의 의결서가 [${doneVoteLabel}]로 제출되었습니다.\n접속을 종료하셔도 됩니다.`;
   setTimeout(()=>{
     const done=document.getElementById('donePanel').querySelector('.done-wrap');
@@ -2313,13 +2315,13 @@ function voteLabel(vote, ag){
   if(isQuadScheme(ag)){
     return {approve:'인용',partial:'부분인용',reject:'기각',dismiss:'각하'}[vote]||'—';
   }
-  return {approve:'가결',reject:'부결'}[vote]||'—';
+  return {approve:'원안가결',partial:'수정가결',reject:'부결',dismiss:'보류'}[vote]||'—';
 }
 /* 안건의 의결유형별 선택지 스키마 (라벨/색상) */
 function voteSchema(ag){
   return isQuadScheme(ag)
     ? [{key:'approve',label:'인용',color:'var(--ok)'},{key:'partial',label:'부분인용',color:'#1565c0'},{key:'reject',label:'기각',color:'var(--err)'},{key:'dismiss',label:'각하',color:'#888'}]
-    : [{key:'approve',label:'가결',color:'var(--ok)'},{key:'reject',label:'부결',color:'var(--err)'}];
+    : [{key:'approve',label:'원안가결',color:'var(--ok)'},{key:'partial',label:'수정가결',color:'#1565c0'},{key:'reject',label:'부결',color:'var(--err)'},{key:'dismiss',label:'보류',color:'#888'}];
 }
 /* 서명 완료된 위원들의 의결내용 집계 */
 function voteCounts(ag){
