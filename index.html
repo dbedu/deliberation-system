@@ -830,6 +830,12 @@ const Agendas = {
     if(error) throw error;
     if(!data || data.length===0) throw new Error('상태 변경 권한이 없거나 안건을 찾을 수 없습니다.');
   },
+  async update(id, fields){
+    const { data, error } = await sbClient().from('dlb_agendas').update(fields).eq('id', id).select();
+    if(error) throw error;
+    if(!data || data.length===0) throw new Error('수정 권한이 없거나 안건을 찾을 수 없습니다.');
+    return data[0];
+  },
   async remove(id){
     const { data, error } = await sbClient().from('dlb_agendas').delete().eq('id', id).select();
     if(error) throw error;
@@ -1367,24 +1373,8 @@ function openDetail(id){
   const ag=DB.agendas.find(a=>a.id===id);
   if(!ag||(ag.owner!==DB.sess.id&&DB.sess.role!=='master')){toast('열람 권한이 없습니다.','err');return;}
   document.getElementById('moDetailTitle').textContent=ag.committee+' — '+ag.agenda.slice(0,18);
-  const fc=ag.attachments?ag.attachments.length:0;
   // info
-  document.getElementById('dt-info').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="fg"><label>위원회</label><div style="padding:7px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;">${ag.committee}</div></div>
-      <div class="fg"><label>상태</label><div style="padding:7px 11px;">${bHtml(ag.status)}</div></div>
-      <div class="fg"><label>개최 일시</label><div style="padding:7px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;">${ag.datetime}</div></div>
-      <div class="fg"><label>장소</label><div style="padding:7px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;">${ag.place||'-'}</div></div>
-    </div>
-    <div class="fg"><label>안건</label><div style="padding:9px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;line-height:1.8;">${ag.agenda}</div></div>
-    <div class="fg"><label>심의 내용</label><div style="padding:9px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;line-height:1.8;min-height:48px;">${ag.review||'-'}</div></div>
-    <div class="fg"><label>의결 주문</label><div style="padding:9px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;line-height:1.8;">${ag.decision||'-'}</div></div>
-    <div class="fg"><label>첨부 파일</label><div style="padding:9px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;">${fc>0?ag.attachments.map(f=>`📎 ${f.name}`).join('<br>'):'없음'}</div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-outline btn-sm" onclick="changeStatus('${id}','active')">진행중</button>
-      <button class="btn btn-ok btn-sm" onclick="changeStatus('${id}','complete')">완료 처리</button>
-      <button class="btn btn-ghost btn-sm" onclick="changeStatus('${id}','closed')">마감</button>
-    </div>`;
+  renderDetailInfo(ag);
   // tok
   const signed=ag.members.filter(m=>m.signed).length;
   // 위원 자격증명 전역 맵 저장 (특수문자 우회)
@@ -1459,6 +1449,136 @@ function openDetail(id){
   // prev
   document.getElementById('dt-prev').innerHTML=buildDocHTML(ag);
   openMo('moDetail');swTab('dt','info');
+}
+
+/* ══════════ 안건 정보/첨부파일 수정 (등록 후에도 수정 가능) ══════════ */
+let detailEditFiles=[];
+function renderDetailInfo(ag){
+  const fc=ag.attachments?ag.attachments.length:0;
+  document.getElementById('dt-info').innerHTML=`
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+      <button class="btn btn-outline btn-sm" onclick="startEditAgendaInfo()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        안건 정보·첨부파일 수정
+      </button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="fg"><label>위원회</label><div style="padding:7px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;">${ag.committee}</div></div>
+      <div class="fg"><label>상태</label><div style="padding:7px 11px;">${bHtml(ag.status)}</div></div>
+      <div class="fg"><label>개최 일시</label><div style="padding:7px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;">${ag.datetime}</div></div>
+      <div class="fg"><label>장소</label><div style="padding:7px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;">${ag.place||'-'}</div></div>
+    </div>
+    <div class="fg"><label>안건</label><div style="padding:9px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;line-height:1.8;">${ag.agenda}</div></div>
+    <div class="fg"><label>심의 내용</label><div style="padding:9px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;line-height:1.8;min-height:48px;">${ag.review||'-'}</div></div>
+    <div class="fg"><label>의결 주문</label><div style="padding:9px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;line-height:1.8;">${ag.decision||'-'}</div></div>
+    <div class="fg"><label>첨부 파일</label><div style="padding:9px 11px;background:#f8f7f4;border-radius:var(--r);font-size:13px;">${fc>0?ag.attachments.map(f=>`📎 ${f.name}`).join('<br>'):'없음'}</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-outline btn-sm" onclick="changeStatus('${ag.id}','active')">진행중</button>
+      <button class="btn btn-ok btn-sm" onclick="changeStatus('${ag.id}','complete')">완료 처리</button>
+      <button class="btn btn-ghost btn-sm" onclick="changeStatus('${ag.id}','closed')">마감</button>
+    </div>`;
+}
+function escAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escHtml(s){return escAttr(s);}
+function startEditAgendaInfo(){
+  const ag=DB.agendas.find(a=>a.id===detailId);
+  if(!ag) return;
+  const signed=ag.members.filter(m=>m.signed).length;
+  detailEditFiles=[...(ag.attachments||[])];
+  document.getElementById('dt-info').innerHTML=`
+    ${signed>0?`<div class="fg" style="background:#fff8e8;border:1px solid var(--accent-l);border-radius:var(--r);padding:10px 14px;font-size:12.5px;color:#8a6d1d;">
+      ⚠ 이미 ${signed}명의 위원이 서명을 완료했습니다. 안건 내용이나 첨부파일을 수정하면 기존 서명 내용과 실제 심의 자료가 달라질 수 있으니, 필요한 경우에만 신중하게 수정해주세요.
+    </div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="fg"><label>위원회</label><input id="edt-com" type="text" value="${escAttr(ag.committee)}"></div>
+      <div class="fg"><label>개최 일시</label><input id="edt-dt" type="text" value="${escAttr(ag.datetime)}"></div>
+      <div class="fg"><label>장소</label><input id="edt-pl" type="text" value="${escAttr(ag.place||'')}"></div>
+      <div class="fg"><label>제목</label><input id="edt-tit" type="text" value="${escAttr(ag.title||'')}"></div>
+    </div>
+    <div class="fg"><label>안건</label><textarea id="edt-ag" rows="3">${escHtml(ag.agenda||'')}</textarea></div>
+    <div class="fg"><label>심의 내용</label><textarea id="edt-rv" rows="3">${escHtml(ag.review||'')}</textarea></div>
+    <div class="fg"><label>의결 주문</label><textarea id="edt-dc" rows="2">${escHtml(ag.decision||'')}</textarea></div>
+    <div class="fg">
+      <label>첨부 파일 (기존 파일 삭제 후 새로 업로드 가능)</label>
+      <div class="upload-zone" id="editUploadZone" onclick="document.getElementById('editFileInput').click()">
+        <input type="file" id="editFileInput" multiple style="display:none" onchange="handleEditFiles(this.files)">
+        <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3v12M6 9l6-6 6 6M5 21h14"/></svg>
+        <p>클릭 또는 드래그하여 파일 추가</p><small>파일당 최대 8MB</small>
+      </div>
+      <div class="file-list" id="editFileList"></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary btn-sm" onclick="saveAgendaEdit()">저장</button>
+      <button class="btn btn-ghost btn-sm" onclick="renderDetailInfo(DB.agendas.find(a=>a.id===detailId))">취소</button>
+    </div>`;
+  renderEditFileList();
+  const ez=document.getElementById('editUploadZone');
+  ez.addEventListener('dragover',e=>{e.preventDefault();ez.classList.add('drag');});
+  ez.addEventListener('dragleave',()=>ez.classList.remove('drag'));
+  ez.addEventListener('drop',e=>{e.preventDefault();ez.classList.remove('drag');handleEditFiles(e.dataTransfer.files);});
+}
+function handleEditFiles(files){
+  if(detailEditFiles.length===0 && files.length>0){
+    const ok=confirm('⚠ 첨부 자료는 서명 위원이 열람하게 됩니다.\n\n주민등록번호 등 개인정보나 외부 유출 시 문제가 될 수 있는 민감한 원문 자료는 올리지 말고, 요약본이나 비식별화된 자료로 대체해주세요.\n\n확인을 누르면 첨부를 계속 진행합니다.');
+    if(!ok){document.getElementById('editFileInput').value='';return;}
+  }
+  for(const f of files){
+    if(f.size>MAX_SIZE){toast(`${f.name}: 파일 크기가 8MB를 초과합니다.`,'err');continue;}
+    if(detailEditFiles.find(u=>u.name===f.name)){toast(`${f.name}: 이미 추가된 파일입니다.`);continue;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+      detailEditFiles.push({name:f.name,size:f.size,type:f.type,dataUrl:e.target.result});
+      renderEditFileList();
+    };
+    reader.readAsDataURL(f);
+  }
+  document.getElementById('editFileInput').value='';
+}
+function renderEditFileList(){
+  const el=document.getElementById('editFileList');
+  if(!el) return;
+  if(!detailEditFiles.length){el.innerHTML='<div style="font-size:12px;color:var(--light);padding:4px 2px;">첨부된 파일이 없습니다.</div>';return;}
+  el.innerHTML=detailEditFiles.map((f,i)=>{
+    const ico=f.type==='application/pdf'?'PDF':(f.type||'').startsWith('image/')?'IMG':'FILE';
+    const cls=f.type==='application/pdf'?'fi-pdf':(f.type||'').startsWith('image/')?'fi-img':'fi-etc';
+    const sz=f.size>1024*1024?(f.size/1024/1024).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB';
+    return `<div class="file-item">
+      <div class="file-icon ${cls}">${ico}</div>
+      <div class="file-meta"><div class="fname">${f.name}</div><div class="fsize">${sz}</div></div>
+      <button class="file-del" onclick="removeEditFile(${i})" title="삭제">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+}
+function removeEditFile(i){detailEditFiles.splice(i,1);renderEditFileList();}
+async function saveAgendaEdit(){
+  if(!detailId) return;
+  const com=document.getElementById('edt-com').value.trim();
+  const dt=document.getElementById('edt-dt').value.trim();
+  const pl=document.getElementById('edt-pl').value.trim();
+  const tit=document.getElementById('edt-tit').value.trim();
+  const agenda=document.getElementById('edt-ag').value.trim();
+  const rv=document.getElementById('edt-rv').value.trim();
+  const dc=document.getElementById('edt-dc').value.trim();
+  if(!com||!dt||!agenda){toast('위원회명, 개최일시, 안건은 필수입니다.','err');return;}
+  const btn=document.querySelector('#dt-info button.btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='저장 중...';}
+  try{
+    await Agendas.update(detailId,{
+      committee:com, datetime:dt, place:pl, title:tit, agenda, review:rv, decision:dc,
+      attachments:[...detailEditFiles],
+    });
+    addLog({event:'edit_agenda', agendaId:detailId, agendaTitle:com, detail:`안건 정보/첨부파일 수정 (첨부 ${detailEditFiles.length}개)`});
+    await refreshAgendasFromSupabase();
+  }catch(e){
+    console.error(e);
+    toast('수정 중 오류가 발생했습니다: '+(e.message||e),'err');
+    if(btn){btn.disabled=false;btn.textContent='저장';}
+    return;
+  }
+  openDetail(detailId);
+  toast('안건 정보가 수정되었습니다.','ok');
 }
 async function changeStatus(id,s){
   try{
