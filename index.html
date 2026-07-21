@@ -504,6 +504,8 @@ tr:hover td{background:#fafaf8;}
                 <option value="20" selected>20분</option>
                 <option value="30">30분</option>
                 <option value="60">60분</option>
+                <option value="90">90분</option>
+                <option value="120">120분</option>
               </select>
             </div>
             <div style="display:flex;gap:10px;">
@@ -541,6 +543,8 @@ tr:hover td{background:#fafaf8;}
             <option value="logout">퇴장</option>
             <option value="block">중복 차단</option>
             <option value="expire">시간 만료</option>
+            <option value="extend">시간연장</option>
+            <option value="reset_vote">서명취소</option>
           </select>
           <button class="btn btn-outline btn-sm" onclick="exportLogs()">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -630,7 +634,10 @@ tr:hover td{background:#fafaf8;}
 <div id="scMember">
   <div class="mem-header">
     <div class="htitle" id="mHTitle">심의의결서 서명</div>
-    <div class="htimer" id="mTimer" style="display:none;"></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button id="mTimerExtend" onclick="extendMemTime()" style="display:none;background:#fff;color:var(--primary-l);border:none;border-radius:20px;padding:6px 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">⏱ +15분 연장</button>
+      <div class="htimer" id="mTimer" style="display:none;"></div>
+    </div>
   </div>
   <div class="mem-body">
 
@@ -1434,7 +1441,15 @@ function openDetail(id){
       <button onclick="copyDetailCredAll(${i})"
         style="width:100%;padding:7px;background:#fff;border:1.5px solid var(--border);color:var(--muted);border-radius:var(--r);cursor:pointer;font-size:12px;font-family:inherit;">
         📋 URL + 아이디 + 비밀번호 전체 복사
-      </button>` : ''}
+      </button>` : `
+      <!-- 의결사항 잘못 선택 시: 서명 취소(되돌리기) -->
+      <div style="display:flex;align-items:center;gap:10px;background:#fdecea;border-radius:var(--r);padding:9px 12px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-weight:600;color:var(--err);margin-bottom:2px;">의결 내용을 잘못 선택하셨나요?</div>
+          <div style="font-size:11.5px;color:var(--muted);line-height:1.5;">서명을 취소하면 이 위원의 의결·서명이 삭제되고, 같은 접속 아이디로 다시 접속해 의결 내용을 새로 선택하고 서명할 수 있게 됩니다.</div>
+        </div>
+        <button onclick="resetMemberVote(${i})" style="padding:6px 13px;background:var(--err);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap;flex-shrink:0;">서명 취소</button>
+      </div>`}
     </div>`).join('')}`;
 
   // DOM에 값 직접 주입 (특수문자 이스케이프 우회)
@@ -1625,6 +1640,8 @@ function renderStatus(){
 /* ══════════ 위원 서명 페이지 ══════════ */
 let timerInt=null,curAg=null,curMidx=-1,curVote=null;
 let dupCheckInt=null;
+let memRemSec=0,memExtendCount=0;
+const MEM_EXTEND_SEC=15*60, MEM_EXTEND_MAX=2, MEM_EXTEND_SHOW_BELOW=5*60;
 
 function showMemPage(ag,midx,sessId,wasDup){
   curAg=ag;curMidx=midx;curVote=null;
@@ -1688,16 +1705,19 @@ function showMemPage(ag,midx,sessId,wasDup){
   // 타이머
   if(timerInt)clearInterval(timerInt);
   const tel=document.getElementById('mTimer');
+  const extBtn=document.getElementById('mTimerExtend');
+  memExtendCount=0;
   if(ag.timelimit>0){
     tel.style.display='inline-block';
-    let rem=ag.timelimit*60;
+    memRemSec=ag.timelimit*60;
     const tick=()=>{
-      const m=String(Math.floor(rem/60)).padStart(2,'0'),s=String(rem%60).padStart(2,'0');
-      tel.textContent=`⏱ ${m}:${s}`;tel.classList.toggle('urg',rem<=60);
-      if(rem<=0){clearInterval(timerInt);addLog({event:'expire',memberName:mem.name,agendaId:ag.id,agendaTitle:ag.committee,detail:'접속 시간 만료',hash:''});alert('접속 시간이 만료되었습니다.');memLogout('expire');}
-      rem--;
+      const m=String(Math.floor(memRemSec/60)).padStart(2,'0'),s=String(memRemSec%60).padStart(2,'0');
+      tel.textContent=`⏱ ${m}:${s}`;tel.classList.toggle('urg',memRemSec<=60);
+      extBtn.style.display=(memRemSec<=MEM_EXTEND_SHOW_BELOW && memExtendCount<MEM_EXTEND_MAX)?'inline-block':'none';
+      if(memRemSec<=0){clearInterval(timerInt);addLog({event:'expire',memberName:mem.name,agendaId:ag.id,agendaTitle:ag.committee,detail:'접속 시간 만료',hash:''});alert('접속 시간이 만료되었습니다.');memLogout('expire');}
+      memRemSec--;
     };tick();timerInt=setInterval(tick,1000);
-  }else{tel.style.display='none';}
+  }else{tel.style.display='none';extBtn.style.display='none';}
   setTimeout(()=>initSigCanvas(),150);
   // 열람 로그
   addLog({event:'view',memberName:mem.name,agendaId:ag.id,agendaTitle:ag.committee,detail:'안건 열람 시작',hash:''});
@@ -1715,6 +1735,19 @@ function showMemPage(ag,midx,sessId,wasDup){
       alert('⚠ 동일 아이디로 다른 곳에서 접속하여 이 세션이 종료되었습니다.');
     }
   },5000);
+}
+
+/* 위원 스스로 접속 시간 연장 (세션당 최대 MEM_EXTEND_MAX회, 회당 MEM_EXTEND_SEC초) */
+function extendMemTime(){
+  if(!curAg||memExtendCount>=MEM_EXTEND_MAX) return;
+  memRemSec+=MEM_EXTEND_SEC;
+  memExtendCount++;
+  document.getElementById('mTimerExtend').style.display='none';
+  const mem=curAg.members[curMidx];
+  const left=MEM_EXTEND_MAX-memExtendCount;
+  toast(`검토 시간이 15분 연장되었습니다.${left>0?` (앞으로 ${left}회 더 연장 가능)`:' (더 이상 연장할 수 없습니다)'}`,'ok');
+  addLog({event:'extend',memberName:mem.name,agendaId:curAg.id,agendaTitle:curAg.committee,detail:'위원 접속 시간 15분 연장',hash:''});
+  RemoteLogs.add({event:'extend',memberName:mem.name,agendaId:curAg.id,detail:'위원 접속 시간 15분 연장'});
 }
 
 /* 탭 전환 (위원 페이지) */
@@ -2371,8 +2404,8 @@ async function renderLogs(){
   let logs=[...cachedLogs]; // 이미 최신순 정렬됨
   if(agFilter) logs=logs.filter(l=>l.agendaId===agFilter);
   if(evFilter) logs=logs.filter(l=>l.event===evFilter);
-  const evLabel={login:'접속',view:'열람',sign:'서명',logout:'퇴장',block:'차단',expire:'만료',reset_pw:'비번재발급'};
-  const evCls={login:'log-ev-login',view:'log-ev-view',sign:'log-ev-sign',logout:'log-ev-logout',block:'log-ev-block',expire:'log-ev-logout',reset_pw:'log-ev-view'};
+  const evLabel={login:'접속',view:'열람',sign:'서명',logout:'퇴장',block:'차단',expire:'만료',reset_pw:'비번재발급',reset_vote:'서명취소',extend:'시간연장'};
+  const evCls={login:'log-ev-login',view:'log-ev-view',sign:'log-ev-sign',logout:'log-ev-logout',block:'log-ev-block',expire:'log-ev-logout',reset_pw:'log-ev-view',reset_vote:'log-ev-block',extend:'log-ev-view'};
   if(!logs.length){
     tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">기록된 로그가 없습니다.</td></tr>';
     return;
@@ -2518,6 +2551,30 @@ async function resetMemberPassword(idx){
     console.error(e);
     toast('비밀번호 재발급 중 오류가 발생했습니다: '+(e.message||e),'err');
   }
+}
+// 위원이 의결사항을 잘못 선택하고 서명까지 제출한 경우, 관리자가 되돌려 재선택/재서명이 가능하도록 초기화
+async function resetMemberVote(idx){
+  if(!detailId) return;
+  const ags=DB.agendas;
+  const ag=ags.find(a=>a.id===detailId);
+  if(!ag) return;
+  const m=ag.members[idx];
+  if(!m || !m.signed) return;
+  if(!confirm(`${m.name} 위원의 서명을 취소할까요?\n\n현재 [${voteLabel(m.vote,ag)}]로 제출된 의결·서명 내용이 삭제되며, 위원은 기존 접속 아이디로 다시 접속해 의결 내용을 새로 선택하고 서명해야 합니다.\n\n이 작업은 되돌릴 수 없습니다.`)) return;
+  try{
+    const { error } = await sbClient().rpc('dlb_reset_member_vote', { p_member_id: m.id });
+    if(error) throw error;
+    await RemoteLogs.add({event:'reset_vote', memberName:m.name, agendaId:ag.id, detail:`${m.name} 위원 의결·서명 취소(관리자 되돌림, 기존: ${voteLabel(m.vote,ag)})`});
+  }catch(e){
+    console.error(e);
+    toast('서명 취소 중 오류가 발생했습니다: '+(e.message||e),'err');
+    return;
+  }
+  m.vote=null; m.signed=false; m.signData=null; m.opinion='';
+  DB.agendas = ags; // 로컬 캐시 반영 (안 하면 재조회 전까지 화면이 안 바뀜)
+  openDetail(detailId);
+  swTab('dt','tok'); // 위원 접속 아이디 탭에 그대로 머물러서 취소 결과가 바로 보이게
+  toast('서명이 취소되었습니다. 위원이 다시 접속해 의결 내용을 선택할 수 있습니다.','ok');
 }
 // 요소 텍스트 복사
 function copyEl(id){
