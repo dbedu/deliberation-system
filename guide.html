@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>심의의결 관리 시스템 활용 가이드 - 서울특별시동부교육지원청</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'sys-navy': '#1a3a5c',
+                        'sys-dark': '#17263a',
+                        'sys-gold': '#c8a84b',
+                        'sys-light': '#f8fafc',
+                        'sys-primary': '#2563eb'
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        .watermark-bg {
+            background-image: repeating-linear-gradient(-45deg, rgba(26, 58, 92, 0.04), rgba(26, 58, 92, 0.04) 120px, transparent 120px, transparent 240px);
+        }
+        .canvas-container { touch-action: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Top System Header -->
+    <header class="bg-sys-navy text-white shadow-md border-b-2 border-sys-gold sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-sys-gold text-sys-navy font-bold p-2 rounded-lg text-sm flex items-center justify-center shadow-inner">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                </div>
+                <div class="flex items-center space-x-2 flex-wrap">
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">
+                        심의의결 관리 시스템 <span class="text-xs sm:text-sm font-normal text-slate-300">(서울특별시동부교육지원청)</span>
+                    </h1>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                        실제 프로그램 연동형
+                    </span>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center space-x-4 text-xs text-slate-300">
+                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block mr-1.5"></span>시스템 정상 가동 중</span>
+                <span class="border-l border-slate-600 h-4"></span>
+                <span>보안 레벨: 최고등급 (256-bit AES)</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Banner -->
+    <div class="bg-gradient-to-r from-sys-dark via-sys-navy to-slate-800 text-white py-8 px-4 sm:px-6 lg:px-8 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2 text-sys-gold text-xs font-semibold uppercase tracking-wider mb-2">
+                        <span>서울특별시동부교육지원청 표준 업무 가이드</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white sm:truncate">
+                        전자 심의의결 관리 시스템 활용 가이드
+                    </h2>
+                    <p class="mt-2 text-sm text-slate-300 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                        심의위원회의 안건 등록부터 보안 문서 검토, 캔버스 자필서명, 실시간 감사로그 및 최종 의결서 생성까지의 표준 행정 절차를 안내합니다.
+                    </p>
+                </div>
+                <div class="mt-4 md:mt-0 flex space-x-3 flex-shrink-0 ml-4">
+                    <button onclick="document.getElementById('simulator-section').scrollIntoView({behavior: 'smooth'})" class="inline-flex items-center px-4 py-2 border border-sys-gold text-sm font-medium rounded-md text-sys-gold bg-transparent hover:bg-sys-gold/10 transition-all shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        실무 체험 시작하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+        <!-- Process Overview Section -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-sys-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        시스템 핵심 처리 프로세스 (4단계)
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">담당자의 안건 및 계정 관리부터 위원의 분할 화면 검토·서명까지의 표준 순서입니다.</p>
+                </div>
+                <div class="hidden sm:flex items-center space-x-3 text-xs">
+                    <span class="inline-flex items-center"><span class="w-3 h-3 rounded-full bg-sys-navy mr-1.5"></span>담당자</span>
+                    <span class="inline-flex items-center"><span class="w-3 h-3 rounded-full bg-emerald-600 mr-1.5"></span>심의위원</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Step 1 Card -->
+                <div id="step-card-1" onclick="window.selectStep(1)" class="cursor-pointer bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-sys-navy/5 rounded-bl-full flex items-top justify-end pr-3 pt-2 text-sys-navy font-bold text-lg">01</div>
+                    <div>
+                        <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded bg-sys-navy/10 text-sys-navy mb-3">1단계 · 담당자</span>
+                        <h4 class="text-base font-bold text-slate-800 group-hover:text-sys-primary transition-colors mb-2">안건 등록 & 접속 계정 생성</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                            위원회, 안건명, 심의내용 및 회의자료(PDF/이미지)를 등록하고 위원별 **접속 아이디/비밀번호**를 생성합니다.
+                        </p>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-sys-primary font-medium">
+                        <span>화면 체험하기</span>
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+
+                <!-- Step 2 Card -->
+                <div id="step-card-2" onclick="window.selectStep(2)" class="cursor-pointer bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-full flex items-top justify-end pr-3 pt-2 text-emerald-700 font-bold text-lg">02</div>
+                    <div>
+                        <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded bg-emerald-100 text-emerald-800 mb-3">2단계 · 심의위원</span>
+                        <h4 class="text-base font-bold text-slate-800 group-hover:text-emerald-700 transition-colors mb-2">위원 접속 & 분할 화면 검토</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                            전용 로그인 후 좌측 화면에서 **[심의자료]** 및 **[첨부파일(PDF)]**을 보안 워터마크와 함께 열람합니다.
+                        </p>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-emerald-700 font-medium">
+                        <span>화면 체험하기</span>
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+
+                <!-- Step 3 Card -->
+                <div id="step-card-3" onclick="window.selectStep(3)" class="cursor-pointer bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-50 rounded-bl-full flex items-top justify-end pr-3 pt-2 text-emerald-700 font-bold text-lg">03</div>
+                    <div>
+                        <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded bg-emerald-100 text-emerald-800 mb-3">3단계 · 심의위원</span>
+                        <h4 class="text-base font-bold text-slate-800 group-hover:text-emerald-700 transition-colors mb-2">의결 선택 & 캔버스 서명 제출</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                            우측 서명 패널에서 찬성/반대(의결)를 선택하고 서명란에 자필 서명 후 제출하여 **심의의결 완료**를 처리합니다.
+                        </p>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-emerald-700 font-medium">
+                        <span>화면 체험하기</span>
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+
+                <!-- Step 4 Card -->
+                <div id="step-card-4" onclick="window.selectStep(4)" class="cursor-pointer bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-sys-navy/5 rounded-bl-full flex items-top justify-end pr-3 pt-2 text-sys-navy font-bold text-lg">04</div>
+                    <div>
+                        <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded bg-sys-navy/10 text-sys-navy mb-3">4단계 · 담당자</span>
+                        <h4 class="text-base font-bold text-slate-800 group-hover:text-sys-primary transition-colors mb-2">서명현황 · 접속로그 · 의결서</h4>
+                        <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                            실시간 서명 현황과 IP 접속 감사로그를 확인하고 **최종** 심의의결서 PDF를 출력/보관합니다.
+                        </p>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-sys-primary font-medium">
+                        <span>화면 체험하기</span>
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Simulator Container -->
+        <section id="simulator-section" class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <!-- Simulator Control Header Bar -->
+            <div class="bg-sys-dark text-white px-6 py-4 flex flex-col md:flex-row md:items-center justify-between border-b border-slate-700 gap-4">
+                <div class="flex items-center space-x-3">
+                    <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+                    <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                    <h3 id="sim-title" class="ml-2 text-sm md:text-base font-semibold text-slate-200">
+                        1단계: 담당자 안건 등록 및 위원 접속 계정 발급
+                    </h3>
+                </div>
+
+                <!-- Simulator Step Nav Buttons -->
+                <div class="flex items-center bg-slate-800/80 p-1 rounded-lg border border-slate-700 text-xs overflow-x-auto">
+                    <button id="nav-btn-1" onclick="window.selectStep(1)" class="px-3 py-1.5 rounded-md font-medium text-white bg-sys-primary transition-all whitespace-nowrap">
+                        1. 안건등록
+                    </button>
+                    <button id="nav-btn-2" onclick="window.selectStep(2)" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all whitespace-nowrap">
+                        2. 안건검토
+                    </button>
+                    <button id="nav-btn-3" onclick="window.selectStep(3)" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all whitespace-nowrap">
+                        3. 의결서명
+                    </button>
+                    <button id="nav-btn-4" onclick="window.selectStep(4)" class="px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all whitespace-nowrap">
+                        4. 최종결과
+                    </button>
+                </div>
+            </div>
+
+            <!-- Simulator Workspace Body -->
+            <div class="p-4 sm:p-6 min-h-[520px] bg-slate-50">
+
+                <!-- PANEL 1: Manager Agenda Registration -->
+                <div id="sim-panel-1" class="space-y-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                            <h4 class="font-bold text-slate-800 text-sm sm:text-base flex items-center">
+                                <span class="w-2 h-2 rounded-full bg-sys-navy mr-2"></span>
+                                심의위원회 안건 신규 등록
+                            </h4>
+                            <span class="text-xs text-slate-400">문서번호: DB-2026-0721호</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
+                            <div>
+                                <label class="block text-slate-600 font-medium mb-1">위원액 구분</label>
+                                <input type="text" readonly value="2026년도 제3회 동부 교육환경개선 심의위원회" class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-slate-700 font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-slate-600 font-medium mb-1">안건명</label>
+                                <input type="text" readonly value="관내 초·중학교 스마트 교실 구축 및 환경개선 안건" class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-slate-700 font-semibold">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-slate-600 font-medium mb-1">심의 요약 내용</label>
+                                <textarea readonly rows="2" class="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-slate-700">본 안건은 2026년도 동부 관내 12개교 대상 스마트 디지털 학습 환경 조성 및 노후 시설 개선에 관한 건입니다.</textarea>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-slate-600 font-medium mb-1">심의 회의자료 (첨부파일)</label>
+                                <div class="flex items-center justify-between bg-slate-100 border border-dashed border-slate-300 rounded-lg px-4 py-2.5">
+                                    <div class="flex items-center space-x-2 text-slate-700">
+                                        <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
+                                        <span class="font-medium text-xs sm:text-sm">[회의자료] 2026_스마트교실_환경개선_안건서.pdf (4.8MB)</span>
+                                    </div>
+                                    <span class="text-xs bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">보안 워터마크 자동적용</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Token Account List -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-800 text-xs sm:text-sm mb-3 flex items-center justify-between">
+                            <span>심의위원 접속 토큰 및 계정 발급 현황</span>
+                            <span class="text-xs font-normal text-slate-500">총 5명 발급 완료</span>
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                                        <th class="p-2.5">위원 구분</th>
+                                        <th class="p-2.5">성명</th>
+                                        <th class="p-2.5">접속 ID</th>
+                                        <th class="p-2.5">임시 비밀번호</th>
+                                        <th class="p-2.5">발급 상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-700">
+                                    <tr>
+                                        <td class="p-2.5 font-medium">위 원 장</td>
+                                        <td class="p-2.5">김동부 위원장</td>
+                                        <td class="p-2.5 font-mono text-sys-navy">member01</td>
+                                        <td class="p-2.5 font-mono">pass****</td>
+                                        <td class="p-2.5"><span class="text-emerald-600 font-semibold">발급완료</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 font-medium">외부 위원</td>
+                                        <td class="p-2.5">이교육 위원</td>
+                                        <td class="p-2.5 font-mono text-sys-navy">member02</td>
+                                        <td class="p-2.5 font-mono">pass****</td>
+                                        <td class="p-2.5"><span class="text-emerald-600 font-semibold">발급완료</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 font-medium">내부 위원</td>
+                                        <td class="p-2.5">박행정 위원</td>
+                                        <td class="p-2.5 font-mono text-sys-navy">member03</td>
+                                        <td class="p-2.5 font-mono">pass****</td>
+                                        <td class="p-2.5"><span class="text-emerald-600 font-semibold">발급완료</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="window.selectStep(2)" class="px-4 py-2 bg-sys-navy text-white text-xs sm:text-sm font-semibold rounded-lg hover:bg-slate-800 transition-all shadow-sm">
+                                다음 단계: 위원 검토 화면 체험 →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 2: Member Access & Document Split Viewer -->
+                <div id="sim-panel-2" class="hidden space-y-4">
+                    <!-- Top Timer & Security Banner -->
+                    <div class="bg-amber-500/10 border border-amber-400/30 rounded-lg p-3 flex items-center justify-between text-xs text-amber-900">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="font-bold">심의 검토 제한 시간: <span id="timer-display">59분 45초</span></span>
+                        </div>
+                        <span class="text-slate-500 hidden sm:inline">접속자: member01 (김동부 위원장) | IP: 172.16.10.45</span>
+                    </div>
+
+                    <!-- Split Screen Container -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[440px]">
+                        <!-- Left Screen: Watermarked PDF Viewer -->
+                        <div class="lg:col-span-7 bg-white rounded-xl border border-slate-300 p-4 relative overflow-hidden flex flex-col watermark-bg shadow-inner">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-200 mb-3 z-10">
+                                <span class="font-bold text-xs text-slate-800 flex items-center">
+                                    <svg class="w-4 h-4 mr-1 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
+                                    [보안열람] 2026_스마트교실_환경개선_안건서.pdf
+                                </span>
+                                <span class="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded font-semibold">캡처·인쇄 금지</span>
+                            </div>
+
+                            <!-- Watermark Overlay Text -->
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 transform -rotate-12 select-none">
+                                <div class="text-center">
+                                    <p class="text-xl sm:text-2xl font-black text-slate-900 tracking-widest">서울특별시동부교육지원청</p>
+                                    <p class="text-sm font-bold text-slate-800 mt-1">열람위원: 김동부 (172.16.10.45)</p>
+                                    <p class="text-xs font-mono text-slate-700">2026-07-21 16:59:27</p>
+                                </div>
+                            </div>
+
+                            <!-- Simulated PDF Document Content -->
+                            <div class="flex-grow overflow-y-auto space-y-3 text-xs text-slate-700 p-3 bg-slate-50/50 rounded border border-slate-200 z-10">
+                                <h5 class="text-sm font-bold text-slate-900 text-center border-b pb-2">제3회 동부 교육환경개선 심의 안건서</h5>
+                                <p class="font-semibold text-sys-navy">1. 사업 목적</p>
+                                <p class="pl-2 leading-relaxed">관내 초·중학교의 노후화된 정보화 교실을 스마트 가변형 교실로 전환하여 미래형 디지털 교육 기반을 구축하고자 함.</p>
+                                <p class="font-semibold text-sys-navy mt-2">2. 주요 예산 내역</p>
+                                <ul class="list-disc pl-6 space-y-1">
+                                    <li>디지털 전자칠판 및 전자단상 교체: 4.2억원</li>
+                                    <li>학생용 태블릿 PC 및 충전함 배치: 3.1억원</li>
+                                    <li>학습실 무선 AP 인프라 확충: 1.5억원</li>
+                                </ul>
+                                <p class="font-semibold text-sys-navy mt-2">3. 기대 효과</p>
+                                <p class="pl-2 leading-relaxed">디지털 교과서 활용도 제고 및 학생 맞춤형 미래교육 환경 제공.</p>
+                            </div>
+                        </div>
+
+                        <!-- Right Screen: Agenda Summary & Decision Prep -->
+                        <div class="lg:col-span-5 bg-white rounded-xl border border-slate-200 p-4 flex flex-col justify-between shadow-sm">
+                            <div>
+                                <h5 class="font-bold text-slate-800 text-sm pb-2 border-b border-slate-100 mb-3">안건 요약 및 심의 체크리스트</h5>
+                                <div class="space-y-3 text-xs">
+                                    <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                        <span class="text-slate-500 block mb-1">안건 구분</span>
+                                        <span class="font-bold text-slate-800">원안 가결 여부 검토 건</span>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <p class="font-semibold text-slate-700">위원 사전 확인사항:</p>
+                                        <label class="flex items-center space-x-2 text-slate-600">
+                                            <input type="checkbox" checked disabled class="rounded text-sys-navy">
+                                            <span>회의자료 보안 내용 숙지 완료</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 text-slate-600">
+                                            <input type="checkbox" checked disabled class="rounded text-sys-navy">
+                                            <span>이해충돌 방지 서약 동의</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="window.selectStep(3)" class="w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-lg text-xs hover:bg-emerald-700 transition-all shadow-sm flex items-center justify-center">
+                                의결 및 전자서명 진행하기 →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 3: Member Vote Selection & Canvas Signature -->
+                <div id="sim-panel-3" class="hidden space-y-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        <!-- Left Panel: Summary -->
+                        <div class="lg:col-span-5 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <span class="inline-block px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-800 rounded mb-2">3단계 : 의결 제출</span>
+                                <h4 class="font-bold text-slate-800 text-sm sm:text-base mb-2">의결선택 및 자필서명</h4>
+                                <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                                    심의한 내용에 따라 찬성, 반대, 또는 기권을 선택하신 후 하단 **서명란**에 자필로 서명해 주세요.
+                                </p>
+                                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1">
+                                    <p><span class="text-slate-500">위원 성명:</span> <span class="font-bold text-slate-800">김동부 (위원장)</span></p>
+                                    <p><span class="text-slate-500">안 건 명:</span> <span class="font-medium text-slate-800">스마트 교실 구축 및 환경개선 안건</span></p>
+                                </div>
+                            </div>
+
+                            <!-- Vote Options Buttons -->
+                            <div class="mt-4 space-y-2">
+                                <label class="block text-xs font-bold text-slate-700">1. 의결 결과 선택</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" onclick="window.setVote('찬성')" id="btn-vote-1" class="vote-btn py-2.5 text-xs font-bold rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all">찬 성</button>
+                                    <button type="button" onclick="window.setVote('반대')" id="btn-vote-2" class="vote-btn py-2.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all">반 대</button>
+                                    <button type="button" onclick="window.setVote('기권')" id="btn-vote-3" class="vote-btn py-2.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all">기 권</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Canvas Signature Pad -->
+                        <div class="lg:col-span-7 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-xs font-bold text-slate-700">2. 전자 자필서명 (서명란)</label>
+                                    <button onclick="window.clearCanvas()" class="text-xs text-slate-500 hover:text-red-600 flex items-center transition-colors">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        지우기
+                                    </button>
+                                </div>
+
+                                <!-- Signature Canvas Box -->
+                                <div class="canvas-container relative bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl h-48 flex items-center justify-center overflow-hidden">
+                                    <canvas id="sig-canvas" class="w-full h-full cursor-crosshair z-10"></canvas>
+                                    <span id="canvas-placeholder" class="absolute text-slate-400 text-xs pointer-events-none select-none">
+                                        마우스 또는 터치로 이곳에 서명하세요
+                                    </span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1.5">* 서명 제출 시 시점확인(TSA) 정보와 함께 위변조 방지 인증이 적용됩니다.</p>
+                            </div>
+
+                            <button onclick="window.submitSignature()" class="w-full mt-4 py-3 bg-emerald-600 text-white font-bold rounded-lg text-xs sm:text-sm hover:bg-emerald-700 transition-all shadow-md flex items-center justify-center">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                심의의결 제출 및 서명 확정
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 4: Manager Status Dashboard, Access Logs & Final PDF -->
+                <div id="sim-panel-4" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                        <!-- Committee Signature Status Table -->
+                        <div class="lg:col-span-7 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                                <h4 class="font-bold text-slate-800 text-xs sm:text-sm flex items-center">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>
+                                    위원별 실시간 의결 서명 현황
+                                </h4>
+                                <span class="text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-full">의결 완료 (5/5)</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-100 text-slate-600">
+                                            <th class="p-2">위원명</th>
+                                            <th class="p-2">의결구분</th>
+                                            <th class="p-2">서명시각</th>
+                                            <th class="p-2">서명상태</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr>
+                                            <td class="p-2 font-medium">김동부 (위원장)</td>
+                                            <td class="p-2"><span class="text-emerald-600 font-bold">찬성</span></td>
+                                            <td class="p-2 text-slate-500">16:59:27</td>
+                                            <td class="p-2"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">서명완료</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-2 font-medium">이교육 위원</td>
+                                            <td class="p-2"><span class="text-emerald-600 font-bold">찬성</span></td>
+                                            <td class="p-2 text-slate-500">16:55:12</td>
+                                            <td class="p-2"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">서명완료</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-2 font-medium">박행정 위원</td>
+                                            <td class="p-2"><span class="text-emerald-600 font-bold">찬성</span></td>
+                                            <td class="p-2 text-slate-500">16:52:04</td>
+                                            <td class="p-2"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">서명완료</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Audit Log & PDF Download Box -->
+                        <div class="lg:col-span-5 bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-xs sm:text-sm mb-3 pb-2 border-b border-slate-100 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5 text-sys-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    최종 심의의결서 생성 및 보관
+                                </h4>
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-2 mb-4">
+                                    <div class="flex justify-between"><span class="text-slate-500">의결결과:</span><span class="font-bold text-emerald-700">원안 가결 (찬성 5표)</span></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">위변조검증:</span><span class="font-bold text-slate-700">TSA 타임스탬프 정상</span></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">감사로그:</span><span class="font-mono text-slate-600">IP / Timestamp 기록됨</span></div>
+                                </div>
+                            </div>
+
+                            <button onclick="window.downloadDoc()" class="w-full py-3 bg-sys-navy text-white font-bold rounded-lg text-xs sm:text-sm hover:bg-slate-800 transition-all shadow-md flex items-center justify-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                최종 심의의결서 (PDF) 출력 다운로드
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-sys-dark text-slate-400 py-6 border-t border-slate-800 text-xs text-center">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>서울특별시동부교육지원청 전자 심의의결 관리 시스템 | 보안운영 가이드</p>
+            <p class="mt-1 text-slate-500">본 시스템은 개인정보보호법 및 공공기록물 관리법 표준을 준수합니다.</p>
+        </div>
+    </footer>
+
+    <!-- Toast Message Container -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-sys-navy text-white px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 z-50 flex items-center space-x-2 text-xs sm:text-sm border border-sys-gold">
+        <svg class="w-5 h-5 text-sys-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span id="toast-msg">안내 메시지</span>
+    </div>
+
+    <script>
+        // Global variables
+        window.selectedVote = '찬성';
+        window.isDrawing = false;
+        window.hasSigned = false;
+
+        // Toast notification helper
+        window.showToast = function(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            if (toast && toastMsg) {
+                toastMsg.textContent = message;
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+                setTimeout(() => {
+                    toast.classList.remove('translate-y-0', 'opacity-100');
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 3000);
+            }
+        };
+
+        // Step switching logic
+        window.selectStep = function(stepNum) {
+            for (let i = 1; i <= 4; i++) {
+                const navBtn = document.getElementById(`nav-btn-${i}`);
+                const stepCard = document.getElementById(`step-card-${i}`);
+                const panel = document.getElementById(`sim-panel-${i}`);
+
+                if (navBtn) {
+                    if (i === stepNum) {
+                        navBtn.className = "px-3 py-1.5 rounded-md font-medium text-white bg-sys-primary transition-all whitespace-nowrap shadow";
+                    } else {
+                        navBtn.className = "px-3 py-1.5 rounded-md font-medium text-slate-300 hover:text-white transition-all whitespace-nowrap";
+                    }
+                }
+
+                if (stepCard) {
+                    if (i === stepNum) {
+                        stepCard.classList.add('ring-2', 'ring-sys-primary', 'shadow-md');
+                    } else {
+                        stepCard.classList.remove('ring-2', 'ring-sys-primary', 'shadow-md');
+                    }
+                }
+
+                if (panel) {
+                    if (i === stepNum) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
+                }
+            }
+
+            const titleElement = document.getElementById('sim-title');
+            if (titleElement) {
+                const stepTitles = {
+                    1: "1단계: 담당자 안건 등록 및 위원 접속 계정 발급",
+                    2: "2단계: 위원 접속 & 분할 화면 검토",
+                    3: "3단계: 의결 선택 & 캔버스 서명 제출",
+                    4: "4단계: 서명현황 · 접속로그 · 최종 의결서"
+                };
+                titleElement.textContent = stepTitles[stepNum] || "";
+            }
+
+            // Init canvas if step 3 is loaded
+            if (stepNum === 3) {
+                setTimeout(window.initCanvas, 50);
+            }
+        };
+
+        // Vote selection handling
+        window.setVote = function(voteType) {
+            window.selectedVote = voteType;
+            const btn1 = document.getElementById('btn-vote-1');
+            const btn2 = document.getElementById('btn-vote-2');
+            const btn3 = document.getElementById('btn-vote-3');
+
+            const activeClass = "vote-btn py-2.5 text-xs font-bold rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm";
+            const inactiveClass = "vote-btn py-2.5 text-xs font-bold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all";
+
+            if (btn1) btn1.className = (voteType === '찬성') ? activeClass : inactiveClass;
+            if (btn2) btn2.className = (voteType === '반대') ? activeClass : inactiveClass;
+            if (btn3) btn3.className = (voteType === '기권') ? activeClass : inactiveClass;
+
+            window.showToast(`[${voteType}] 의결항목이 선택되었습니다.`);
+        };
+
+        // Signature Canvas Logic
+        window.initCanvas = function() {
+            const canvas = document.getElementById('sig-canvas');
+            if (!canvas) return;
+
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#1e293b';
+
+            function getPos(e) {
+                const cRect = canvas.getBoundingClientRect();
+                if (e.touches && e.touches[0]) {
+                    return {
+                        x: e.touches[0].clientX - cRect.left,
+                        y: e.touches[0].clientY - cRect.top
+                    };
+                }
+                return {
+                    x: e.clientX - cRect.left,
+                    y: e.clientY - cRect.top
+                };
+            }
+
+            function startDraw(e) {
+                window.isDrawing = true;
+                window.hasSigned = true;
+                const placeholder = document.getElementById('canvas-placeholder');
+                if (placeholder) placeholder.style.display = 'none';
+
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            }
+
+            function draw(e) {
+                if (!window.isDrawing) return;
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
+
+            function stopDraw() {
+                window.isDrawing = false;
+            }
+
+            // Mouse Events
+            canvas.onmousedown = startDraw;
+            canvas.onmousemove = draw;
+            canvas.onmouseup = stopDraw;
+            canvas.onmouseleave = stopDraw;
+
+            // Touch Events
+            canvas.ontouchstart = startDraw;
+            canvas.ontouchmove = draw;
+            canvas.ontouchend = stopDraw;
+        };
+
+        window.clearCanvas = function() {
+            const canvas = document.getElementById('sig-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            window.hasSigned = false;
+
+            const placeholder = document.getElementById('canvas-placeholder');
+            if (placeholder) placeholder.style.display = 'block';
+
+            window.showToast("서명란이 초기화되었습니다.");
+        };
+
+        window.submitSignature = function() {
+            if (!window.hasSigned) {
+                window.showToast("서명란에 자필 서명을 작성해 주세요.");
+                return;
+            }
+            window.showToast("전자서명 및 심의의결이 정상 제출되었습니다.");
+            setTimeout(() => {
+                window.selectStep(4);
+            }, 1000);
+        };
+
+        window.downloadDoc = function() {
+            window.showToast("최종 심의의결서(PDF) 다운로드가 시작됩니다.");
+        };
+
+        // DOM Initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            window.selectStep(1);
+
+            // Window resize handler for responsive canvas
+            window.addEventListener('resize', function() {
+                const canvas = document.getElementById('sig-canvas');
+                if (canvas && canvas.offsetParent !== null) {
+                    window.initCanvas();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
